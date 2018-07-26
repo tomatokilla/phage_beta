@@ -6,7 +6,7 @@ local getmetatable, setmetatable, error, next, pairs =
 ]]
 local _M = {}
 
-function _M:new(name, description)
+function _M.new(name, description)
   return setmetatable({
     NAME = name,
     DESCRIPTION = description
