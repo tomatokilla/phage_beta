@@ -32,14 +32,20 @@ local flow = Object:extend()
         }
       }
 ]]
-function flow:initialize(routines)
-  self.routines = routines or {}
+function flow:initialize(routines, taskMap)
+  self.routines = routines
+  self.taskMap = taskMap
   self.state = Box.new('FLow', 'status container of flow')
 end
 
 -- Initialize the index of task list, default to 1
-function flow:initIndex(n)
-  self.state:set({index = n or 1})
+function flow:initState(task, index)
+  task = task or self.taskMap[1]
+  index = index or 1
+  self.state:set({
+    currentTask = task
+    index = index
+  })
 end
 
 -- 4 Test: check the schema of routines is valid
@@ -53,6 +59,9 @@ local function isArray(t)
   return true
 end
 function flow:checkRoutines()
+  if self.routines == nil then
+    error('fatal err: flow got no routines')
+  end
   for k, v in pairs(self.routines) do
     if type(k) ~= 'string' then
       error('routines must be a dict!')
@@ -61,6 +70,11 @@ function flow:checkRoutines()
       error(format("subroutine: { %s } isn't an array!"))
     end
   end
+end
+
+-- Check if the taskMap is valid
+function flow:checkTaskMap()
+  
 end
 
 -- Reset Routines
@@ -107,17 +121,27 @@ function flow:removeAllStep(list)
   self.routines[list] = {}
 end
 
--- Resolve index & toggle index
+-- resolve what to do next
 function flow:resolve(...)
-  -- definition ..
-  self.state:set({})
+  -- check if the current task has been finished or not
+  
 end
 
+-- toggle flow index according to state
 function flow:toggleIndex()
-  -- toggle flow index according to state
-
+  flow
 end
 
+-- load workers layer
+function flow:mountLabours(labours)
+  labours = labours or {state}
+  self.labours = labours
+end
+
+-- Return obj that holds 
+function flow:prepare(workingMap)
+  local 
+end
 
 
 
@@ -139,8 +163,43 @@ end
 
 
 
-
-
-
 ---------------------------------------------------------------------
 return flow
+
+local routines = {
+  initDevice = {
+    'checkingFoo',
+    'checkingBar',
+    '...'
+  },
+
+  register = {
+    'opennzt'
+    'tapfoo',
+    'tapbar',
+  },
+  
+  browse = {
+    'matching',
+    'chat',
+    'randomMatch&Chat'
+  }
+}
+
+local taskMap = {
+  {
+    task = 'initDevice',
+    description = 'initDevice'
+  },
+  {
+    task = 'register'
+  },
+}
+
+local labours = {}
+
+local f = flow:new(routines)
+f:checkRoutines()
+f:initIndex()
+f:mountLabours(labours)
+f:prepare()
