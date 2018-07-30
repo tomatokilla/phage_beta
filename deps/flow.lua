@@ -32,19 +32,27 @@ local flow = Object:extend()
         }
       }
 ]]
-function flow:initialize(routines, taskMap)
+function flow:initialize(routines, taskMap, labours)
   self.routines = routines
-  self.taskMap = taskMap
-  self.state = Box.new('FLow', 'status container of flow')
+  self.taskMap  = taskMap
+  self.labours  = labours
+  self.state    = Box.new('FLow', 'status container of flow')
 end
 
 -- Initialize the index of task list, default to 1
-function flow:initState(task, index)
-  task = task or self.taskMap[1]
-  index = index or 1
-  self.state:set({
-    currentTask = task
-    index = index
+function flow:initState()
+  local this = self
+  local state = self.state
+  state:set({
+    currentTask = this.taskMap[1],
+    currentIndex = 1,
+    flowState = 'ok',
+    flowErr = {
+      routinesErr = '',
+      taskMapErr  = '',
+      laboursErr  = '',
+    },
+    laboursReport = this.labours.state,
   })
 end
 
@@ -74,7 +82,6 @@ end
 
 -- Check if the taskMap is valid
 function flow:checkTaskMap()
-  
 end
 
 -- Reset Routines
@@ -87,6 +94,7 @@ end
 
 -- insert one step to the list at the given index
 function flow:addStep(list, index, step)
+  if self.routines[list] == nil then return end
   if list == nil or index == nil then return end
   if step == nil then
     step  = index
@@ -112,38 +120,73 @@ local function removeByValue(tbl, val)
   end
 end
 function flow:removeStep(list, step)
-  if step == nil then return end
+  if step == nil or self.routines[list] == nil then
+    return
+  end
   return removeByValue(self.routines[list], step)
 end
 
 function flow:removeAllStep(list)
-  if not list then return end
+  if not list or self.routines[list] == nil then
+    return
+  end
   self.routines[list] = {}
 end
 
--- resolve what to do next
+-- Resolve what to do next
 function flow:resolve(...)
-  -- check if the current task has been finished or not
-  
+  local task, step
+  local state = self.state
+  local laboursReport = state.laboursReport
+  if laboursReport.
+
+  return task, step
 end
 
 -- toggle flow index according to state
 function flow:toggleIndex()
-  flow
+  local this = self
+  this.state:set({
+    currentTask = 
+    currentIndex = 
+  })
 end
 
--- load workers layer
-function flow:mountLabours(labours)
-  labours = labours or {state}
-  self.labours = labours
+-- 4 Testing: Check if the labours matches routines
+function flow:checkLabours()
+  local routines, labours = self.routines, self.labours
+  local err
+  for k, v in pairs(routines) do
+    if err then break end
+    if type(labours[k]) ~= 'table' then
+      err = true break
+    end
+    for i, step in pairs(v) do
+      if type(labour[k][step]) ~= 'function' then
+        err = true break
+      end
+    end
+  end
+  if err then error('labours do not matches flow routine!')
 end
 
--- Return obj that holds 
-function flow:prepare(workingMap)
-  local 
+-- Return ok, flow instance if everything is ok, return err, errMsg otherwise
+function flow:prepare()
+  local stat, obj, errTbl
+  -- initialize state box
+  self:initState()
+  -- check stuff
+  self:checkRoutines()
+  self:checkTaskMap()
+  self:checkLabours()
+
+  if self.state.flowState == 'ok' then
+    stat, obj = true, self
+  else
+    stat, errTbl = false, self.state.flowErr
+  end
+  return stat, obj, errTbl
 end
-
-
 
 
 

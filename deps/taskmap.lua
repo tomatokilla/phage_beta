@@ -44,7 +44,7 @@ function _M:initialize(map)
   for i, v in pairs(map) do
     self[i] = {
       id = i,
-      task = v.task
+      task = v.task,
       descrption = v.descrption or "null"
     }
   end
