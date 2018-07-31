@@ -51,21 +51,21 @@ function _M.new(name, description)
         end
         local meta = getmetatable(self).__index
         for k, v in pairs(tbl) do
-          if type(k) ~= 'number' and k ~= 'set' and k ~= 'modify' then
+          if type(k) ~= 'number' and k ~= 'set' and k ~= 'mod' then
             meta[k] = v
           end
         end
       end,
 
       -- modify data that which key is already exists
-      modify = function(self, tbl)
+      mod = function(self, tbl)
         if type(tbl) ~= 'table' or next(tbl) == nil then
           return
         end
         local meta = getmetatable(self).__index
         -- check if the top level key of tbl is valid
         for k, v in pairs(tbl) do
-          if type(k) == 'number' or k == 'set' or k == 'modify' then
+          if type(k) == 'number' or k == 'set' or k == 'mod' then
             return
           end
         end
@@ -78,7 +78,7 @@ function _M.new(name, description)
     },
     __newindex = function()
       error([[cannot modify data directly in a state box,
-            use foo:set({k = v}) or foo:modify({k = v}) instead.]])
+            use foo:set({k = v}) or foo:mod({k = v}) instead.]])
     end
   })
 end

@@ -17,8 +17,7 @@ local flow = Object:extend()
 --[[
   Initialize the flow obj
     caveat:
-      routines must be a dict, and sub_routine must be an array which means
-      no sub_sub_routine:
+      routines must be a dict, and sub_routine must be an array
       schema of routines like this:
       routines = {
         subroutine1 = {
@@ -86,25 +85,22 @@ end
 
 -- Reset Routines
 function flow:resetRoutines(routines)
-  if type(list) ~= 'table' or next(list) == nil then
-    return
-  end
-  self.routines = routines
+  self.routines = routines or {}
 end
 
 -- insert one step to the list at the given index
-function flow:addStep(list, index, step)
-  if self.routines[list] == nil then return end
-  if list == nil or index == nil then return end
+function flow:addStep(task, index, step)
+  if self.routines[task] == nil then return end
+  if task == nil or index == nil then return end
   if step == nil then
     step  = index
-    index = #list + 1
+    index = #task + 1
   end
-  return insert(self.routines[list], index, step)
+  return insert(self.routines[task], index, step)
 end
 
-function flow:appendStep(list, step)
-  return self:addStep(list, step)
+function flow:appendStep(task, step)
+  return self:addStep(task, step)
 end
 
 -- Remove one step from the task list
@@ -119,36 +115,51 @@ local function removeByValue(tbl, val)
     end
   end
 end
-function flow:removeStep(list, step)
-  if step == nil or self.routines[list] == nil then
+function flow:removeStep(task, step)
+  if step == nil or self.routines[task] == nil then
     return
   end
-  return removeByValue(self.routines[list], step)
+  return removeByValue(self.routines[task], step)
 end
 
-function flow:removeAllStep(list)
-  if not list or self.routines[list] == nil then
+function flow:removeAllStep(task)
+  if not task or self.routines[task] == nil then
     return
   end
-  self.routines[list] = {}
+  self.routines[task] = {}
 end
 
--- Resolve what to do next
-function flow:resolve(...)
-  local task, step
+-- Resolve what to do next --> 2be optimized // should be resolved by a
+-- jump map which is a definition that control the flow routine when an unexpectd
+-- exception occured
+function flow:resolve(jumpMap)
   local state = self.state
   local laboursReport = state.laboursReport
-  if laboursReport.
-
+  local task = state.currentTask
+  local step = #self.routines[task] == state.currentIndex and
+                1 or state.currentIndex + 1
+                
+  -- (jump) an indicator which implies the order which step to jump2
+  if laboursReport.gonnaJump then
+    task = laboursReport.jumpSite.task
+    step = laboursReport.jumpSite.step
+    -- reset the indicator
+    laboursReport:mod({
+      gonnaJump = false,
+      jumpSite  = {
+        task = '',
+        step = ''
+      }
+    })
+  end
   return task, step
 end
 
 -- toggle flow index according to state
-function flow:toggleIndex()
-  local this = self
-  this.state:set({
-    currentTask = 
-    currentIndex = 
+function flow:toggleIndex(task, index)
+  self.state:mod({
+    currentTask = task,
+    currentIndex = index
   })
 end
 
