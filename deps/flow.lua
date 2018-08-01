@@ -8,7 +8,7 @@ local format = string.format
 
 --[[
   Flow objects:
-    1. routines = {list1 = {...}, list2 = {...}, ...}
+    1. routine = {list1 = {...}, list2 = {...}, ...}
     2. index
     3. statebox
 ]]
@@ -17,9 +17,9 @@ local flow = Object:extend()
 --[[
   Initialize the flow obj
     caveat:
-      routines must be a dict, and sub_routine must be an array
-      schema of routines like this:
-      routines = {
+      routine must be a dict, and sub_routine must be an array
+      schema of routine like this:
+      routine = {
         subroutine1 = {
           'have breakfast',
           'have lunch',
@@ -31,11 +31,11 @@ local flow = Object:extend()
         }
       }
 ]]
-function flow:initialize(routines, taskMap, labours)
-  self.routines = routines
-  self.taskMap  = taskMap
-  self.labours  = labours
-  self.state    = Box.new('FLow', 'status container of flow')
+function flow:initialize(routine, taskMap, worker)
+  self.routine = routine
+  self.taskMap = taskMap
+  self.worker  = worker
+  self.state   = StateBox.new('FLow', 'status container of flow')
 end
 
 -- Initialize the index of task list, default to 1
@@ -43,60 +43,110 @@ function flow:initState()
   local this = self
   local state = self.state
   state:set({
-    currentTask = this.taskMap[1],
+    currentTask = '',
     currentIndex = 1,
     flowState = 'ok',
     flowErr = {
-      routinesErr = '',
+      routineErr = '',
       taskMapErr  = '',
-      laboursErr  = '',
+      workerErr  = '',
     },
-    laboursReport = this.labours.state,
+    workerReport = this.worker.report,
   })
 end
 
--- 4 Test: check the schema of routines is valid
-local function isArray(t)
-  if type(t) ~= 'table' then return false end
-  local n = #t
-  for k, v in pairs(t) do
-    if type(k) ~= 'number' then return false end
-    if k > n then return false end
-  end
-  return true
+-- shortcut to mod flow state 
+function flow:modFlowState(flowstatus, flowerr)
+  local state = self.state
+  state:mod({
+    flowState = flowstatus,
+    flowErr = flowerr
+  })
 end
-function flow:checkRoutines()
-  if self.routines == nil then
-    error('fatal err: flow got no routines')
-  end
-  for k, v in pairs(self.routines) do
-    if type(k) ~= 'string' then
-      error('routines must be a dict!')
+
+-- 4 Test: check the schema of routine is valid
+function flow:checkRoutine()
+  local ok, errMsg = true
+  local _err, _errMsg = false, 'invalid routine'
+  local routine, state = self.routine, self.state
+  if type(routine) ~= 'table' or next(routine) == nil then
+    _err = true
+  else  
+    for k, v in pairs(routine) do
+      if type(k) ~= 'string' or not isArray(v) then
+        _err = true break
+      end
     end
-    if not isArray(v) then
-      error(format("subroutine: { %s } isn't an array!"))
-    end
   end
+  if _err then
+    ok, errMsg = false, _errMsg
+  end
+  return ok,errMsg
 end
 
 -- Check if the taskMap is valid
 function flow:checkTaskMap()
+  local ok, errMsg = true
+  local _err = false
+  local _errMsg = 'invalid taskmap or do not match routine'
+  local routine, taskMap, state = self.routine, self.taskMap, self.state
+  if type(taskMap) ~= 'table' or not isArray(taskMap) then
+    _err = true
+  else
+    for _, v in pairs(taskMap) do
+      if type(v) ~= 'table' then
+        _err = true break
+      end
+      if not (v.id and v.task and routine[v.task]) then
+        _err = true break
+      end
+    end
+  end
+  if _err then
+    ok, errMsg = false, _errMsg
+  end
+  return ok, errMsg
 end
 
--- Reset Routines
-function flow:resetRoutines(routines)
-  self.routines = routines or {}
+-- Check if the worker matches routine & task
+function flow:checkWorker()
+  local ok, errMsg = true
+  local _err, _errMsg = false, 'worker & (task || routine) do not match!'
+  local routine, worker, state = self.routine, self.worker, self.state
+  if type(worker) ~= 'table' then
+    _err = true
+  else
+    for k, v in pairs(routine) do
+      if type(worker[k]) ~= 'table' then
+        _err = true break
+      end
+      for i, step in pairs(v) do
+        if type(worker[k][step]) ~= 'function' then
+          _err = true break
+        end
+      end
+    end
+  end
+  if _err then
+    ok, errMsg = false, _errMsg
+  end
+  return ok, errMsg
+end
+
+-- Reset Routine
+function flow:resetRoutine(routine)
+  self.routine = routine or {}
 end
 
 -- insert one step to the list at the given index
 function flow:addStep(task, index, step)
-  if self.routines[task] == nil then return end
+  if self.routine[task] == nil then return end
   if task == nil or index == nil then return end
   if step == nil then
     step  = index
     index = #task + 1
   end
-  return insert(self.routines[task], index, step)
+  return insert(self.routine[task], index, step)
 end
 
 function flow:appendStep(task, step)
@@ -104,29 +154,18 @@ function flow:appendStep(task, step)
 end
 
 -- Remove one step from the task list
--- Caveat: the tbl must be an array
-local function removeByValue(tbl, val)
-  if type(tbl) ~= 'table' or next(tbl) == nil or not val then
-    return
-  end
-  for i, v in pairs(tbl) do
-    if v == val then
-      return remove(tbl, i)
-    end
-  end
-end
 function flow:removeStep(task, step)
-  if step == nil or self.routines[task] == nil then
+  if step == nil or self.routine[task] == nil then
     return
   end
-  return removeByValue(self.routines[task], step)
+  return removeByValue(self.routine[task], step)
 end
 
 function flow:removeAllStep(task)
-  if not task or self.routines[task] == nil then
+  if not task or self.routine[task] == nil then
     return
   end
-  self.routines[task] = {}
+  self.routine[task] = {}
 end
 
 -- Resolve what to do next --> 2be optimized // should be resolved by a
@@ -134,19 +173,18 @@ end
 -- exception occured
 function flow:resolve(jumpMap)
   local state = self.state
-  local laboursReport = state.laboursReport
+  local workerReport = state.workerReport
   local task = state.currentTask
-  local step = #self.routines[task] == state.currentIndex and
+  local step = #self.routine[task] == state.currentIndex and
                 1 or state.currentIndex + 1
-                
   -- (jump) an indicator which implies the order which step to jump2
-  if laboursReport.gonnaJump then
-    task = laboursReport.jumpSite.task
-    step = laboursReport.jumpSite.step
+  if workerReport.gonnaJump then
+    task = workerReport.jumpTo.task
+    step = workerReport.jumpTo.step
     -- reset the indicator
-    laboursReport:mod({
+    workerReport:mod({
       gonnaJump = false,
-      jumpSite  = {
+      jumpTo = {
         task = '',
         step = ''
       }
@@ -157,46 +195,43 @@ end
 
 -- toggle flow index according to state
 function flow:toggleIndex(task, index)
+  
   self.state:mod({
     currentTask = task,
     currentIndex = index
   })
 end
 
--- 4 Testing: Check if the labours matches routines
-function flow:checkLabours()
-  local routines, labours = self.routines, self.labours
-  local err
-  for k, v in pairs(routines) do
-    if err then break end
-    if type(labours[k]) ~= 'table' then
-      err = true break
-    end
-    for i, step in pairs(v) do
-      if type(labour[k][step]) ~= 'function' then
-        err = true break
-      end
-    end
-  end
-  if err then error('labours do not matches flow routine!')
-end
-
 -- Return ok, flow instance if everything is ok, return err, errMsg otherwise
 function flow:prepare()
-  local stat, obj, errTbl
+  local state = self.state
+  local status, obj, errTbl
+  local _flowstate, _flowerr = 'ok', {}
   -- initialize state box
   self:initState()
   -- check stuff
-  self:checkRoutines()
-  self:checkTaskMap()
-  self:checkLabours()
+  local ok1, errMsg1 = self:checkRoutine()
+  local ok2, errMsg2 = self:checkTaskMap()
+  local ok3, errMsg3 = self:checkWorker()
 
-  if self.state.flowState == 'ok' then
-    stat, obj = true, self
-  else
-    stat, errTbl = false, self.state.flowErr
+  if not (ok1 and ok2 and ok3) then
+    _flowstate = 'err'
+    if not ok1 then _flowerr.routineErr = errMsg1 end
+    if not ok2 then _flowerr.taskMapErr = errMsg2 end
+    if not ok3 then _flowerr.workerErr  = errMsg3 end
   end
-  return stat, obj, errTbl
+
+  -- update flow state
+  if _flowstate ~= 'ok' then
+    self:modFlowState(_flowstate, _flowerr)
+  end
+
+  if state == 'ok' then
+    status, obj = true, self
+  else
+    status, errTbl = false, state.flowErr
+  end
+  return status, obj, errTbl
 end
 
 
@@ -220,7 +255,7 @@ end
 ---------------------------------------------------------------------
 return flow
 
-local routines = {
+local routine = {
   initDevice = {
     'checkingFoo',
     'checkingBar',
@@ -252,8 +287,8 @@ local taskMap = {
 
 local labours = {}
 
-local f = flow:new(routines)
-f:checkRoutines()
+local f = flow:new(routine)
+f:checkRoutine()
 f:initIndex()
 f:mountLabours(labours)
 f:prepare()
