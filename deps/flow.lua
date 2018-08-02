@@ -40,7 +40,6 @@ end
 
 -- Initialize the index of task list, default to 1
 function flow:initState()
-  local this = self
   local state = self.state
   state:set({
     currentTask = '',
@@ -51,7 +50,7 @@ function flow:initState()
       taskMapErr  = '',
       workerErr  = '',
     },
-    workerReport = this.worker.report,
+    ready = false
   })
 end
 
@@ -81,7 +80,7 @@ function flow:checkRoutine()
   if _err then
     ok, errMsg = false, _errMsg
   end
-  return ok,errMsg
+  return ok, errMsg
 end
 
 -- Check if the taskMap is valid
@@ -171,35 +170,75 @@ end
 -- Resolve what to do next --> 2be optimized // should be resolved by a
 -- jump map which is a definition that control the flow routine when an unexpectd
 -- exception occured
-function flow:resolve(jumpMap)
-  local state = self.state
-  local workerReport = state.workerReport
-  local task = state.currentTask
-  local step = #self.routine[task] == state.currentIndex and
-                1 or state.currentIndex + 1
-  -- (jump) an indicator which implies the order which step to jump2
+function flow:handleWorkerReport(jumpMap)
+  local workerReport = self.worker.report
+  local gonnajump, task, step = false
+  -- indicator which implies the order which step to jump2
   if workerReport.gonnaJump then
+    gonnajump = true
     task = workerReport.jumpTo.task
     step = workerReport.jumpTo.step
     -- reset the indicator
     workerReport:mod({
       gonnaJump = false,
-      jumpTo = {
-        task = '',
-        step = ''
-      }
+      jumpTo = {task = '', step = ''}
     })
   end
-  return task, step
+  return gonnajump, task, step
 end
 
--- toggle flow index according to state
-function flow:toggleIndex(task, index)
-  
-  self.state:mod({
-    currentTask = task,
+-- Get the step index 
+function flow:getStepIndex(task, step)
+  local routine = self.routine
+  local index = 0
+  for k, v in pairs(routine[task]) do
+    if v == 'step' then index = k break end
+  end
+  return index
+end
+
+-- Toggle flow index 
+function flow:stirIndex(mode, n)
+  n = mode == 'increment' and n or -n
+  local state = self.state
+  local _index = state.currentIndex + n
+  local taskLen = #self.routine[state.currentTask]
+  state:mod({
+    currentIndex = (_index <= taskLen and _index > 0) and _index or 1
+  })
+end
+
+function flow:increaseIndex(n)
+  return self:stirIndex('increment', n or 1)
+end
+
+function flow:decreaseIndex(n)
+  return self:stirIndex('decrement', n or 1)
+end
+
+-- Toggle flow task
+function flow:setCurrentTask(task)
+  return self.state:mod({
+    currentTask = task
+  })
+end
+
+function flow:setCurrentIndex(index)
+  return self.state:mod({
     currentIndex = index
   })
+end
+
+function flow:resolve()
+  local state = self.state
+  local gonnajump, task, step = self:handleWorkerReport()
+  if gonnajump then
+    if task ~= '' then self:setCurrentTask(task) end
+    local _index = self:getStepIndex(state.currentTask, step)
+    self:setCurrentIndex(_index)
+  else
+    self:increaseIndex()
+  end
 end
 
 -- Return ok, flow instance if everything is ok, return err, errMsg otherwise
@@ -226,8 +265,9 @@ function flow:prepare()
     self:modFlowState(_flowstate, _flowerr)
   end
 
-  if state == 'ok' then
+  if state.flowState == 'ok' then
     status, obj = true, self
+    state:mod({ready = true})
   else
     status, errTbl = false, state.flowErr
   end
@@ -240,55 +280,17 @@ end
 
 
 function flow:run()
+  local _prepared = self.state.ready
+  if not _prepared then error('error: flow didnot prepared.') end
+  -- activate the worker
+  local state, worker = self.state, self.worker
+  while true do
+    if state.flowState ~= 'ok' then break end
+    worker:exe(state.currentTask, state.currentIndex)
+  end
 end
-
-
-
-
-
-
-
-
 
 
 
 ---------------------------------------------------------------------
 return flow
-
-local routine = {
-  initDevice = {
-    'checkingFoo',
-    'checkingBar',
-    '...'
-  },
-
-  register = {
-    'opennzt'
-    'tapfoo',
-    'tapbar',
-  },
-  
-  browse = {
-    'matching',
-    'chat',
-    'randomMatch&Chat'
-  }
-}
-
-local taskMap = {
-  {
-    task = 'initDevice',
-    description = 'initDevice'
-  },
-  {
-    task = 'register'
-  },
-}
-
-local labours = {}
-
-local f = flow:new(routine)
-f:checkRoutine()
-f:initIndex()
-f:mountLabours(labours)
-f:prepare()
