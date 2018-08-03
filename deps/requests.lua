@@ -1,8 +1,9 @@
 local httpSocket = require('socket.http')
 -- local httpsSocket = require('ssl.https')
-local urlParser = require('socket.url')
+-- local urlParser = require('socket.url')
 local ltn12 = require('ltn12')
 local json = require('cjson.safe')
+-- local json = require('ts').json
 
 local next, pairs, type, error, tostring = 
       next, pairs, type, error, tostring
@@ -22,24 +23,15 @@ local function makeRequest(req)
   }
   local res = {}
   local ok
-  local socket = (find(fullReq.url, '^https:') and 
-        not request.proxy) and https_socket or http_socket
+  local socket = httpSocket
   ok, res.statusCode, res.headers, res.status = socket.request(fullReq)
   res.text = concat(resBody)
   res.json = function() return json.decode(res.text) end
   return res
 end
 
-local function parseArgs(req)
-  checkUrl(req)
-  checkData(req)
-  createHeader(req)
-  checkTimeout(req.timeout)
-  checkRedirect(req.allow_redirects)
-end
-
 local function formatParams(url, params)
-  if not params or next(params) == nil then
+  if type(params) ~= 'table' or next(params) == nil then
     return url
   end
   url = url .. '?'
@@ -48,11 +40,11 @@ local function formatParams(url, params)
     if type(v) == 'table' then
       local val = ''
       for _, _v in ipairs(v) do
-        val = val .. tostring(_v) .. ','
+        val = val .. _v .. ','
       end
       url = url .. val:sub(0, -2)
     else
-      url = url .. tostring(v)
+      url = url .. v
     end
     url = url .. '&'
   end 
@@ -65,18 +57,6 @@ local function checkUrl(req)
   req.url = formatParams(req.url, req.params)
 end
 
-local function createHeader(req)
-  req.headers = req.headers or {}
-  req.headers['Content-Length'] = req.data:len()
-  if req.cookies then
-    if req.headers.cookies then
-      req.headers.cookies = req.headers.cookies .. '; ' .. req.cookies
-    else
-      req.headers.cookies = req.cookies
-    end
-  end
-end
-
 local function checkData(req)
   req.data = req.data or ''
   if type(req.data) == 'table' then
@@ -84,13 +64,28 @@ local function checkData(req)
   end
 end
 
-local function checkTimeout(timeout)
-  httpSocket.TIMEOUT = timeout or 5
-  httpsSocket.TIMEOUT = timeout or 5
+local function createHeader(req)
+  req.headers = req.headers or {}
+  req.headers['Content-Length'] = req.data:len()
+  if req.cookies then
+    req.headers.cookies = req.headers.cookies == nil and req.cookies or
+                          req.headers.cookies .. '; ' .. req.cookies
+  end
 end
 
-local function checkRedirect(allow_redirects)
-  return
+local function checkTimeout(timeout)
+  httpSocket.TIMEOUT = timeout or 6
+  -- httpsSocket.TIMEOUT = timeout or 6
+end
+
+local function checkRedirect(allow_redirects) end
+
+local function parseArgs(req)
+  checkUrl(req)
+  checkData(req)
+  createHeader(req)
+  checkTimeout(req.timeout)
+  checkRedirect(req.allow_redirects)
 end
 
 local function request(method, url, args)
@@ -106,7 +101,7 @@ local function request(method, url, args)
   end
   req.method = method
   parseArgs(req)
-  return makeRequest(req) 
+  return makeRequest(req)
 end
 
 ---------------------------------------------------------------
