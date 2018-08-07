@@ -1,19 +1,3 @@
---[[lit-meta
-  name = "luvit/json"
-  version = "2.5.2"
-  homepage = "http://dkolf.de/src/dkjson-lua.fsl"
-  description = "David Kolf's JSON library repackaged for lit."
-  tags = {"json", "codec"}
-  license = "MIT"
-  author = {
-    name = "David Kolf",
-    homepage = "http://dkolf.de/",
-  }
-  contributors = {
-    "Tim Caswell",
-  }
-]]
-
 -- Module options:
 local always_try_using_lpeg = true
 local register_global_module_table = false
@@ -697,7 +681,7 @@ function json.use_lpeg ()
 
   local Array = P"[" * g.Cmt (g.Carg(1) * g.Carg(2), parsearray) * Space * (P"]" + Err "']' expected")
   local Object = P"{" * g.Cmt (g.Carg(1) * g.Carg(2), parseobject) * Space * (P"}" + Err "'}' expected")
-  local Value = Space * (Array + Object + SimpleValue)
+  local Value = Space * (Array + Object + SimpleValue)s
   local ExpectedValue = Value + Space * Err "value expected"
   ArrayContent = Value * Space * (P"," * g.Cc'cont' + g.Cc'last') * g.Cp()
   local Pair = g.Cg (Space * String * Space * (P":" + Err "colon expected") * ExpectedValue)
@@ -730,8 +714,4 @@ end
 json.parse = json.decode
 json.stringify = json.encode
 
-<<<<<<< HEAD
 return json
-=======
-return json
->>>>>>> add json module
