@@ -1,4 +1,19 @@
--- Thanks to David Kolf, this module works just perfectly for me.
+--[[lit-meta
+  name = "luvit/json"
+  version = "2.5.2"
+  homepage = "http://dkolf.de/src/dkjson-lua.fsl"
+  description = "David Kolf's JSON library repackaged for lit."
+  tags = {"json", "codec"}
+  license = "MIT"
+  author = {
+    name = "David Kolf",
+    homepage = "http://dkolf.de/",
+  }
+  contributors = {
+    "Tim Caswell",
+  }
+]]
+
 -- Module options:
 local always_try_using_lpeg = true
 local register_global_module_table = false
@@ -715,4 +730,8 @@ end
 json.parse = json.decode
 json.stringify = json.encode
 
+<<<<<<< HEAD
 return json
+=======
+return json
+>>>>>>> add json module
