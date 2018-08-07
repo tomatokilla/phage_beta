@@ -1,5 +1,5 @@
 --[[
-  An simple Imitation of python requests, based on luasocket && luasec
+  Imitation of python requests, based on luasocket && luasec
   Usage:
     local requests = require('requests')
     local res = requests.get(url)
@@ -29,9 +29,6 @@
         local res = requests.get('http://www.foo.com/api/user', {params = state.currentUser})
         then 'state' should be mutated.
   This issue might be improved if necessary.
-
-  Author: benmooo
-  Date: $2018/07/15
 ]]
 
 local httpSocket = require('socket.http')
