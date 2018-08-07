@@ -1,8 +1,30 @@
--- Thaks to David kolf, this json module works nicely for me
+--[[lit-meta
+  name = "luvit/json"
+  version = "2.5.2"
+  homepage = "http://dkolf.de/src/dkjson-lua.fsl"
+  description = "David Kolf's JSON library repackaged for lit."
+  tags = {"json", "codec"}
+  license = "MIT"
+  author = {
+    name = "David Kolf",
+    homepage = "http://dkolf.de/",
+  }
+  contributors = {
+    "Tim Caswell",
+  }
+]]
+
+-- Module options:
+local always_try_using_lpeg = true
+local register_global_module_table = false
+local global_module_name = 'json'
 
 --[==[
+
 David Kolf's JSON module for Lua 5.1/5.2
+
 Version 2.5
+
 
 For the documentation see the corresponding readme.txt or visit
 <http://dkolf.de/src/dkjson-lua.fsl/>.
@@ -34,11 +56,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --]==]
-
--- Module options:
-local always_try_using_lpeg = true
-local register_global_module_table = false
-local global_module_name = 'json'
 
 -- global dependencies:
 local pairs, type, tostring, tonumber, getmetatable, setmetatable =
@@ -714,4 +731,3 @@ json.parse = json.decode
 json.stringify = json.encode
 
 return json
-
