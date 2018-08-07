@@ -1,9 +1,42 @@
+--[[
+  Imitation of python requests, based on luasocket && luasec
+  Usage:
+    local requests = require('requests')
+    local res = requests.get(url)
+    local res = requests.get(api, {params = {foo = 'foo', bar = {...}}})
+    local res = requests.get({
+      url = 'http://www.baidu.com',
+      params = {...},
+      data = {...},
+      header = {...},
+      cookie = {...},
+      allow_redirect = true || fasle,
+      proxy = '',
+      ...
+    })
+    print(res.statusCode, res.headers, res.status, res.text, res.json())
+    local res = requests.post()
+    local res = requests.update()
+    local res = requests.delete()
+
+  Limitation: http only   // https will be supported as long as luasec
+  compiled successfully
+
+  Caveat: functions of requests are not **pure**, which means the
+  request obj that passed into the requests funcs might be mutated.
+    eg: local requests = require('requests')
+        local state = {...}
+        local res = requests.get('http://www.foo.com/api/user', {params = state.currentUser})
+        then 'state' should be mutated.
+  This issue might be improved if necessary.
+]]
+
 local httpSocket = require('socket.http')
 -- local httpsSocket = require('ssl.https')
 -- local urlParser = require('socket.url')
 local ltn12 = require('ltn12')
-local json = require('cjson.safe')
--- local json = require('ts').json
+local json = require('json')
+-- local json = require('ts').cjson_safe
 
 local next, pairs, type, error, tostring = 
       next, pairs, type, error, tostring
@@ -21,9 +54,7 @@ local function makeRequest(req)
     redirect = req.allow_redirects,
     proxy = req.proxy
   }
-  local res = {}
-  local ok
-  local socket = httpSocket
+  local res, socket, ok = {}, httpSocket
   ok, res.statusCode, res.headers, res.status = socket.request(fullReq)
   res.text = concat(resBody)
   res.json = function() return json.decode(res.text) end

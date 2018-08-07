@@ -41,10 +41,11 @@ function _M:clearBag(...)
   end
 end
 
+-- 2Be improved..
 function _M:peddle(bag, recyclebin)
   local _bag = self[bag]
   self:clearBag(bag)
-  recyclebin.bag = _bag
+  recyclebin[bag] = _bag
 end
 
 
