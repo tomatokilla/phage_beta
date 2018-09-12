@@ -44,8 +44,8 @@ end
 --------------------------------------------------------------------------------
 
 --[[
-This is the most basic object in phage. It provides simple prototypal
-inheritance and inheritable constructors. All other objects inherit from this.
+  It provides simple prototypal inheritance and inheritable constructors.
+  All other objects inherit from this.
 ]]
 local Object = {}
 core.Object = Object

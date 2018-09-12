@@ -17,7 +17,7 @@ function _M:initialize(...)
 end
 
 function _M:createBag(bag)
-  if type(bag) = 'string' then
+  if type(bag) == 'string' then
     self[bag] = {}
   end
 end

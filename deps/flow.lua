@@ -39,7 +39,7 @@ function flow:initialize(routine, taskMap, worker)
 end
 
 -- Initialize the index of task list, default to 1
-function flow:initState()
+function flow:initState(_state)
   local state = self.state
   state:set({
     currentTask = '',
@@ -52,6 +52,7 @@ function flow:initState()
     },
     ready = false
   })
+  state:set(_state)
 end
 
 -- shortcut to mod flow state 

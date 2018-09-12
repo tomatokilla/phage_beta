@@ -1,14 +1,8 @@
--- Module options:
-local always_try_using_lpeg = true
-local register_global_module_table = false
-local global_module_name = 'json'
+-- Thaks to David kolf, this json module works nicely for me
 
 --[==[
-
 David Kolf's JSON module for Lua 5.1/5.2
-
 Version 2.5
-
 
 For the documentation see the corresponding readme.txt or visit
 <http://dkolf.de/src/dkjson-lua.fsl/>.
@@ -40,6 +34,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --]==]
+
+-- Module options:
+local always_try_using_lpeg = true
+local register_global_module_table = false
+local global_module_name = 'json'
 
 -- global dependencies:
 local pairs, type, tostring, tonumber, getmetatable, setmetatable =
@@ -681,7 +680,7 @@ function json.use_lpeg ()
 
   local Array = P"[" * g.Cmt (g.Carg(1) * g.Carg(2), parsearray) * Space * (P"]" + Err "']' expected")
   local Object = P"{" * g.Cmt (g.Carg(1) * g.Carg(2), parseobject) * Space * (P"}" + Err "'}' expected")
-  local Value = Space * (Array + Object + SimpleValue)s
+  local Value = Space * (Array + Object + SimpleValue)
   local ExpectedValue = Value + Space * Err "value expected"
   ArrayContent = Value * Space * (P"," * g.Cc'cont' + g.Cc'last') * g.Cp()
   local Pair = g.Cg (Space * String * Space * (P":" + Err "colon expected") * ExpectedValue)
