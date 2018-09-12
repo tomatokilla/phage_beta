@@ -153,7 +153,7 @@ function _M.update(url, args)
   return request('PUT', url, args)
 end
 
-function _M.update(url, args)
+function _M.delete(url, args)
   return request('DELETE', url, args)
 end
 

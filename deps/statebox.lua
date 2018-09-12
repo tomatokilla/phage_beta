@@ -1,9 +1,11 @@
+--[[
+  Author: benmooo
+  A table which can not assign data directly, to project data from modified unconsciously
+]]
+
+local Object = require('core').Object
 local getmetatable, setmetatable, error, next, pairs =
       getmetatable, setmetatable, error, next, pairs
-
---[[
-  A table which can not assign data directly, to project data from modified unconscious
-]]
 local _M = {}
 
 -- check if one table is an sub table of another table, deeply, of course.
