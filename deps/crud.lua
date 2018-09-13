@@ -1,95 +1,37 @@
-local json = require "ts".json
+local json   = require('json')
+local util   = require('util')
+local Object = require('core').Object
 
+local isarray  = util.isarray
+local deepcopy = util.deepcopy
+local isequal  = util.isequal
 
-local insert = table.insert
-local remove = table.remove
-local fmt    = string.format
-local pairs  = pairs
-local type   = type
-local error  = error
-local open   = io.open
-local time   = os.time
+local insert   = table.insert
+local remove   = table.remove
+local fmt      = string.format
+local pairs    = pairs
+local type     = type
+local error    = error
+local open     = io.open
+local time     = os.time
 
 -------------------------------------------------------------
 -- CURD operations of collections
 -------------------------------------------------------------
-local crud = {}
+local _M = Object:extend() 
 
-
--- Func: --> verify that if the given table is an array or not
-local function isArray(t)
-  if type(t) ~= "table" then return false end
-
-  local n = #t
-  for i, v in pairs(t) do
-      if type(i) ~= "number" or i > n
-      then return false end
+function _M:find(probe)
+  if not probe then return self end
+  local res = {}
+  for _, v in pairs(self) do
+    local matched = true
+    for m, n in pairs()
   end
-  return true 
-end
-
--- func: clone(obj) --> deeply(recursively) copy an obj
-local function clone(obj)
-    local lookup_tbl = {}
-    local function _copy(obj)
-        if type(obj) ~= "table" then
-            return obj
-        elseif lookup_tbl[obj] then
-            return lookup_tbl[obj]
-        end
-
-        local new_tbl = {}
-        lookup_tbl[obj] = new_tbl
-        for k, v in pairs(obj) do
-            new_tbl[_copy(k)] = _copy(v)
-        end
-        return setmetatable(new_tbl, getmetatable(obj))
-    end
-
-    return _copy(obj)
-end
-
--- Func: --> compare 2 lua values, deeply!! which means recursively
--- compare the values of any tables encounterd. Besides, it will 
--- respect metatable && metamethods (i.e. __eq) if required.
-local function isEqual(t1, t2, withMeta)
-  local _ty1, _ty2 = type(t1), type(t2)
-  if _ty1 ~= _ty2 then return false end
-  if _ty1 ~= 'table' and _ty2 ~= 'table' then return t1 == t2 end
-
-  if withMeta == true then
-    local mt = getmetatable(t1)
-    if mt and mt.__eq then return t1 == t2 end
-  end
-
-  for k1, v1 in pairs(t1) do
-    local v2 = t2[k1]
-    if v2 == nil or not isEqual(v1, v2) then return false end
-  end
-  for k2, v2 in pairs(t2) do
-    local v1 = t1[k2]
-    if v1 == nil or not isEqual(v1, v2) then return false end
-  end
-  return true
 end
 
 
-local function readfile(path)
-  local f = open(path, 'r')
-  if not f then return end
-  local cnt = f:read('*a')
-  f:close()
-  return cnt
-end
 
-local function writefile(path, cnt)
-  local f = open(path, 'w')
-  f:write(cnt)
-  f:close()
-end
-
-
-crud.find = function(collection, probe)
+_M.find = function(collection, probe)
   if not probe then return collection end
 
   local res = {}
