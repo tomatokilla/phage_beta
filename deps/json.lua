@@ -1,3 +1,4 @@
+-- Thanks to David Kolf, this module works just perfectly for me.
 -- Module options:
 local always_try_using_lpeg = true
 local register_global_module_table = false
@@ -681,7 +682,7 @@ function json.use_lpeg ()
 
   local Array = P"[" * g.Cmt (g.Carg(1) * g.Carg(2), parsearray) * Space * (P"]" + Err "']' expected")
   local Object = P"{" * g.Cmt (g.Carg(1) * g.Carg(2), parseobject) * Space * (P"}" + Err "'}' expected")
-  local Value = Space * (Array + Object + SimpleValue)s
+  local Value = Space * (Array + Object + SimpleValue)
   local ExpectedValue = Value + Space * Err "value expected"
   ArrayContent = Value * Space * (P"," * g.Cc'cont' + g.Cc'last') * g.Cp()
   local Pair = g.Cg (Space * String * Space * (P":" + Err "colon expected") * ExpectedValue)
@@ -715,4 +716,3 @@ json.parse = json.decode
 json.stringify = json.encode
 
 return json
-
