@@ -1,16 +1,40 @@
 --------------------------------------------------------
 -- Structed data keeper
 --------------------------------------------------------
+local CRUD = require('crud')
 local json = require('json')
-local crud = require('tantan_src/main/crud')
 
 
-local base = _G
-local insert = table.insert
-local remove = table.remove
-local setmetatable = setmetatable
-local pairs = pairs
-local type = type
+
+
+
+local _M = CRUD:extend()
+
+
+local function _iteratorGen(t)
+  local i, max = 0, t:count()
+  return function()
+    i = i + 1
+    return t[i]
+  end
+end
+
+local _meta = {__index = {
+  count = function(self)
+    return #self
+  end,
+  next = function(self)
+   return _iteratorGen(self)
+  end,
+  -- for testing
+  json = function(self)
+    return json.encode(self)
+  end,
+}}
+
+
+
+
 
 
 -- Initialize db

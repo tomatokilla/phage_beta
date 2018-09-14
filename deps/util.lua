@@ -7,6 +7,7 @@
 
 local type, setmetatable, getmetatable, pairs, next =
       type, setmetatable, getmetatable, pairs, next
+local open = io.open
 
 -- Deep copies a table into a new table.
 -- Tables used as keys are also deep copied, as are metatables
@@ -18,7 +19,7 @@ local function deepcopy(o)
     copy = o
   else
     copy = {}
-    for o_key, o_val in next, orig, nil do
+    for o_key, o_val in next, o, nil do
       copy[deepcopy(o_key)] = deepcopy(o_val)
     end
     setmetatable(copy, deepcopy(getmetatable(o)))
@@ -50,18 +51,35 @@ local function isequal(t1, t2, withmeta)
   return true
 end
 
+-- Check if a table has a value(string or number expected) shallowly
+-- @param (t: table, val: string | number)
+-- @return (b: boolean)
+local function tblHasVal(tbl, val)
+  -- if type(tbl) ~= 'table' then return false end
+  for _, v in pairs(tbl) do
+    if v == val then return true end
+  end
+  return false
+end
+
 -- Compare 2 tables, and returns table1 is subset of table2 or not
--- It will not respect the metatable
+-- It would not respect the metatable, but it respects arrays
 -- @param (t1: table, t2: table)
 -- @return (b: boolean)
+-- Caveat: 
 local function issubset(t1, t2)
   local _ty1, _ty2 = type(t1), type(t2)
-  if _ty1 ~= 'table' or _ty2 ~= 'table' then
-    return t1 == t2
-  end
+  if _ty1 ~= _ty2 then return false end
+  if _ty1 ~= 'table' then return t1 == t2 end
   for k1, v1 in pairs(t1) do
-    local v2 = t2[k1]
-    if v2 == nil or not issubset(v1, v2) then return false end
+    local _t, v2 = type(k1), t2[k1]
+    if v2 == nil then return false end
+    if _t == 'number' then
+      if type(v1) == 'table' then return false end
+      if not tblHasVal(t2, v1) then return false end
+    else
+      if not issubset(v1, v2) then return false end
+    end
   end
   return true
 end
@@ -172,4 +190,6 @@ return {
   isequal     = isequal,
   isarray     = isarray,
   issubset    = issubset,
+  readfile    = readfile,
+  writefile   = writefile,
 }
