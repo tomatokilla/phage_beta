@@ -2,10 +2,10 @@
   Worker:
 ]]
 
-local Object = require('coer').Object
+local Object = require('core').Object
 local util = require('util')
+local withHandler = require('action_wrapper').withHandler
 
-local StateBox = util.StateBox
 
 local type, pairs, next =
       type, pairs, next

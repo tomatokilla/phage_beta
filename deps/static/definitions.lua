@@ -9,8 +9,8 @@ local workingMap = {
     quantity = 9
   },
   {
-    task = 'fertilize'
-    quantity = 8
+    task = 'fertilize',
+    quantity = 8,
   }
 }
 
@@ -21,7 +21,6 @@ local blocked = {
   },
 
   item2 = {
-    ....
   }
 }
 

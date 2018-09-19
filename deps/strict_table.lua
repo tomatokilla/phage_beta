@@ -7,7 +7,7 @@ local Object = require('core').Object
 local util = require('util')
 
 local rawset, getmetatable, error = rawset, getmetatable, error
-local assign, issubset = util.assign, util.issubset
+local assign, issubset = util.assign, util.tblHasKey
 
 
 
@@ -37,7 +37,7 @@ function _M:mod(t)
   if t.set or t.mod then
     error('key words: set | mod was proteced!')
   end
-  if not issubset(t, self) then
+  if not tblHasKey(t, self) then
     error('modify err: the table u provided is not a subset of the origin table!')
   end
   assign(t, self)

@@ -1,4 +1,5 @@
 local Object = require('core').Object
+local isarray = require('util').isarray
 
 local type, error, pairs = type, error, pairs
 
@@ -14,22 +15,9 @@ local type, error, pairs = type, error, pairs
       {id = 1, task = 'foo', descrption = 'null'},
     }
 ]]
-local _M = Object:extend()
 
-local function isArray(t)
-  if type(t) ~= 'table' then return false end
-  local n = #t
-  for k, v in pairs(t) do
-    if type(k) ~= 'number' then return false end
-    if k > n then return false end
-  end
-  return true
-end
-
-local function isValidMap(map)
-  if not isArray(map) then
-    return false
-  end
+local function isValidTaskMap(map)
+  if not isarray(map) then return false end
   for i, v in pairs(map) do
     if type(v) ~= 'table' then return false end
     if v.task == nil then return false end
@@ -37,17 +25,31 @@ local function isValidMap(map)
   return true
 end
 
+
+local _M = Object:extend()
+
+
 function _M:initialize(map)
+  self.map = map
+end
+
+
+function _M:ckeckMap()
+  local ok, errmsg = true, 'invalid taskmap schema!'
+  local map = self.map
   if not isValidMap(map) then
-    error([[invalid map schema or the key {task} didnot provided!]])
+    ok = false
+  else
+    for i, v in pairs(map) do
+      map[i] = {
+        id = i,
+        taskname = v.taskname,
+        times = v.times or 1,
+        descrption = v.descrption or 'null'
+      }
+    end
   end
-  for i, v in pairs(map) do
-    self[i] = {
-      id = i,
-      task = v.task,
-      descrption = v.descrption or "null"
-    }
-  end
+  return ok, ok and '' or errmsg
 end
 
 

@@ -8,6 +8,7 @@
 local type, setmetatable, getmetatable, pairs, next =
       type, setmetatable, getmetatable, pairs, next
 local open = io.open
+local random = math.random
 
 -- Deep copies a table into a new table.
 -- Tables used as keys are also deep copied, as are metatables
@@ -54,7 +55,7 @@ end
 -- Check if a table has a value(string or number expected) shallowly
 -- @param (t: table, val: string | number)
 -- @return (b: boolean)
-local function tblHasVal(tbl, val)
+local function tblhasval(tbl, val)
   -- if type(tbl) ~= 'table' then return false end
   for _, v in pairs(tbl) do
     if v == val then return true end
@@ -76,7 +77,7 @@ local function issubset(t1, t2)
     if v2 == nil then return false end
     if _t == 'number' then
       if type(v1) == 'table' then return false end
-      if not tblHasVal(t2, v1) then return false end
+      if not tblhasval(t2, v1) then return false end
     else
       if not issubset(v1, v2) then return false end
     end
@@ -84,11 +85,11 @@ local function issubset(t1, t2)
   return true
 end
 
--- Compare 2 tables, and returns table1 is subset of table2 or not
+-- Compare 2 tables, and check if table1 is subset of table2 or not
 -- It will not respect the metatable
 -- @param (t1: table, t2: table)
 -- @return (b: boolean)
-local function canModify(t1, t2)
+local function tblhaskey(t1, t2)
   if type(t1) ~= 'table' or type(t2) ~= 'table' then
     return false
   end
@@ -97,7 +98,7 @@ local function canModify(t1, t2)
     if v2 == nil then return false end
     if type(v1) == 'table' then
       if type(v2) ~= 'table' then return false end
-      if not issubset(v1, v2) then return false end
+      if not tblhaskey(v1, v2) then return false end
     end
   end
   return true
@@ -134,6 +135,16 @@ end
 
 -- local function rawAssign(t1, t2)
 -- end
+
+local function shuffle(array)
+  local m, i = #array
+  while m > 0 do
+    i = random(m)
+    array[m], array[i] = array[i], array[m]
+    m = m - 1
+  end
+  return array
+end
 
 
 -- Remove one step from the task list
@@ -188,6 +199,7 @@ return {
   deepcopy    = deepcopy,
   assign      = assign,
   isequal     = isequal,
+  shuffle     = shuffle,
   isarray     = isarray,
   issubset    = issubset,
   readfile    = readfile,

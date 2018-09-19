@@ -47,7 +47,7 @@ function flow:initState(_state)
     flowState = 'ok',
     flowErr = {
       routineErr = '',
-      taskMapErr  = '',
+      taskMapErr = '',
       workerErr  = '',
     },
     ready = false
@@ -62,26 +62,6 @@ function flow:modFlowState(flowstatus, flowerr)
     flowState = flowstatus,
     flowErr = flowerr
   })
-end
-
--- 4 Test: check the schema of routine is valid
-function flow:checkRoutine()
-  local ok, errMsg = true
-  local _err, _errMsg = false, 'invalid routine'
-  local routine, state = self.routine, self.state
-  if type(routine) ~= 'table' or next(routine) == nil then
-    _err = true
-  else  
-    for k, v in pairs(routine) do
-      if type(k) ~= 'string' or not isArray(v) then
-        _err = true break
-      end
-    end
-  end
-  if _err then
-    ok, errMsg = false, _errMsg
-  end
-  return ok, errMsg
 end
 
 -- Check if the taskMap is valid

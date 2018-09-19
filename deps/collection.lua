@@ -1,12 +1,14 @@
---------------------------------------------------------
--- Structed data keeper
---------------------------------------------------------
+--[[
+  Author: benmooo
+  Date: 2018/07/18
+  Structed data keeper
+]]
+
 local CRUD = require('crud')
 local json = require('json')
 local util = require('util')
 
 local readfile, writefile = util.readfile, util.writefile
-
 
 
 local _M = CRUD:extend()
@@ -38,4 +40,3 @@ end
 
 -- Return module
 return _M
-

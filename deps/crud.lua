@@ -123,7 +123,7 @@ end
 
 function _M:insert(rows)
   if not rows then return false, {} end
-  -- prevent distorting data unconsciously
+  -- prevent from distorting data unconsciously
   rows = isarray(rows) and deepcopy(rows) or {deepcopy(rows)}
   -- check data schema // depreacted
   for i, row in pairs(rows) do
