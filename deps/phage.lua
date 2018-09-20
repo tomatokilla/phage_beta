@@ -43,6 +43,7 @@ function _M:initialize(routine, task, devicetype, app, appversion)
   self.settings = StrictTbl:new()
   self.state    = StrictTbl:new()
   self.monitor  = Monitor:new()
+  self.workers  = {}
 end
 
 -- initilize state
@@ -75,13 +76,17 @@ function _M:getSettings(settings)
 end
 
 function _M:loadWorker(task, worker)
+  self.workers[task] = worker
 end
 
-function _M:autoLoadWorker()
+function _M:autoLoadWorkers()
   local info = self.info
-  for taskname, _ in self.task.map do
-    self:mountWorker(taskname, require(fmt('phage.%s.%s.worker',
-                      info.DEVICETYPE, info.APP)))
+  for i, item in pairs(self.task.map) do
+    self:loadWorker(
+      item.taskname,
+      require(fmt('phage.%s.%s.workers.%s', info.DEVICETYPE,
+                  info.APP, item.taskname))
+    )
   end
 end
 
@@ -91,11 +96,66 @@ function _M:shuffleRoutineMapList(listname)
   self.routine:shuffleMapList(listname)
 end
 
+
+function _M:getProgressProfile()
+  local task  = self:getState('currentTask')
+  local index = self:getState('currentTask')
+  local step  = self.routine.map[task][index]
+  local cycle = self:getState('currentTaskCycleIndex')
+  local t_cyc = self:getState('currentTaskTotalCycle')
+  return {
+    current_task  = task,
+    current_index = index,
+    current_step  = step,
+    current_task_cycle = cycle,
+    current_task_total_cycle = t_cyc,
+  } 
+end
+
 function _M:prepare()
+end
+
+function _M:getCurrentProgress()
+  return self:getState('currentTask'),
+         self:getState('currentIndex'),
+         self:getState('cycleIndex')
+end
+
+function _M:act()
+  local task, index, _loop = self:getCurrentProgress()
+  local step = self.routine.map[task][index]
+  local res = self.workers[task][step]()
+  -- check if has error
+  if not res.ok then
+    self:setState({err = true, errMsg = res.msg})
+  end
+end
+
+function _M:resolve()
+  -- first check if has error 
+  -- if 
+  -- second check if the times of task is the last cycle
+end
+
+function _M:hasErr()
+  return self.getState('err')
 end
 
 
 
+function _M:run()
+  while true do
+    -- report the flow node
+    self.monitor:reportAndlog()
+    -- do the current step of task
+    self:act()
+    -- resolve what to do next
+    if self:hasErr() then
+      self.monitor:reportAndlog()
+    end
+    self:resolve()
+  end
+end
 
 
 

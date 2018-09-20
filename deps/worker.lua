@@ -12,49 +12,19 @@ local type, pairs, next =
 
 local _M = Object:extend()
 
-function _M:initialize(job, actions, handler)
-  self.job = job
-  self.actions = actions
-  self.handler = handler
-  self.hooks = {}
-  self.state   = StateBox.new()
+function _M:initialize(job, tasks)
+  self.job   = job
+  self.tasks = tasks
 end
 
-function _M:initState(_state)
-  self.state:set(_state)
-end
-
--- Return a function that wraps the func of actions
-local function wrap(identify, func)
-  return function(...)
-    -- check if th
-    local ok, err = identify(...)
-    if not ok then return ok, err end
-    -- hooks goes here
-    func()
+function _M:wrapTaskActionsWithHandler(handler)
+  for i, task in pairs(self.tasks) do
+    task.action = withHandler(handler)(task.action, task.pages)
   end
 end
 
--- action hooks
-function _M:willAct()
-  local ok, errMsg = true
-  -- function goes here
-  return ok, errMsg
+function _M:checkTasks()
 end
-
-function _M:didAct()
-  local ok, errMsg = true
-  -- function goes here
-  return ok, errMsg
-end
-
-function _M:exe(task, step)
-  
-end
-
-
-
-
 
 
 
