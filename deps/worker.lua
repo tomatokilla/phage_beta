@@ -4,6 +4,7 @@
 
 local Object = require('core').Object
 local util = require('util')
+local Collection = require('collection')
 local withHandler = require('action_wrapper').withHandler
 
 
@@ -15,25 +16,14 @@ local _M = Object:extend()
 function _M:initialize(job, tasks)
   self.job   = job
   self.tasks = tasks
+  self.__collection = Collection:new()
 end
 
 function _M:wrapTaskActionsWithHandler(handler)
   for i, task in pairs(self.tasks) do
-    task.action = withHandler(handler)(task.action, task.pages)
+    self[task] = withHandler(handler)(task.action, task.pages)
   end
 end
-
-function _M:checkTasks()
-end
-
-
-
-
-
-
-
-
-
 
 
 
