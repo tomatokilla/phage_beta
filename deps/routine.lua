@@ -20,8 +20,8 @@
 local Object = require('core').Object
 local util   = require('util')
 
-local type, pairs, next = 
-      type, pairs, next 
+local type, pairs, next =
+      type, pairs, next
 
 local isarray, shuffle = util.isarray, util.shuffle
 

@@ -7,7 +7,7 @@ local Object = require('core').Object
 local util = require('util')
 
 local rawset, getmetatable, error = rawset, getmetatable, error
-local assign, issubset = util.assign, util.tblHasKey
+local assign, tblHasKey = util.assign, util.tblHasKey
 
 
 
@@ -25,7 +25,7 @@ end
 function _M:set(t)
   if type(t) ~= 'table' then error('table expected!') end
   if t.set or t.mod then
-    error('key words: set | mod was proteced!')
+    error('key words: set | mod was reserved!')
   end
   for k, v in pairs(t) do
     rawset(self, k, v)
@@ -35,7 +35,7 @@ end
 function _M:mod(t)
   if type(t) ~= 'table' then error('table expected!') end
   if t.set or t.mod then
-    error('key words: set | mod was proteced!')
+    error('key words: set | mod was reserved!')
   end
   if not tblHasKey(t, self) then
     error('modify err: the table u provided is not a subset of the origin table!')

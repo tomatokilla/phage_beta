@@ -67,7 +67,7 @@ end
 -- It would not respect the metatable, but it respects arrays
 -- @param (t1: table, t2: table)
 -- @return (b: boolean)
--- Caveat: 
+-- Caveat:
 local function issubset(t1, t2)
   local _ty1, _ty2 = type(t1), type(t2)
   if _ty1 ~= _ty2 then return false end
@@ -89,7 +89,7 @@ end
 -- It will not respect the metatable
 -- @param (t1: table, t2: table)
 -- @return (b: boolean)
-local function tblhaskey(t1, t2)
+local function tblHasKey(t1, t2)
   if type(t1) ~= 'table' or type(t2) ~= 'table' then
     return false
   end
@@ -119,7 +119,7 @@ local function isarray(t)
 end
 
 -- Assign value from table1 to table2
--- It will respect the 
+-- It will respect the
 -- @param (t1: table, t2: table)
 -- @return (void)
 local function assign(t1, t2)
@@ -161,7 +161,7 @@ local function removeByValue(tbl, val)
 end
 
 -- read string from local file
--- @param (path: string) 
+-- @param (path: string)
 -- @return (cnt: string)
 local function readfile(path)
   local f = open(path, 'r')
@@ -182,6 +182,17 @@ local function writefile(path, cnt, pat)
 end
 
 
+-- concate the keys of a table
+-- @param (tbl: table, separator: string)
+-- @return (string)
+local function concateTblKeys(tbl, sep)
+  if type(tbl) ~= 'table' then return end
+  local s, sep = '', sep or ''
+  for k, _ in pairs(tbl) do
+    s = s .. k .. sep
+  end
+  return s:sub(0, -2)
+end
 
 
 
@@ -204,4 +215,6 @@ return {
   issubset    = issubset,
   readfile    = readfile,
   writefile   = writefile,
+  tblHasKey   = tblHasKey,
+  concateTblKeys = concateTblKeys,
 }

@@ -20,7 +20,7 @@ local function isValidTaskMap(map)
   if not isarray(map) then return false end
   for i, v in pairs(map) do
     if type(v) ~= 'table' then return false end
-    if v.task == nil then return false end
+    if v.taskname == nil then return false end
   end
   return true
 end
@@ -34,10 +34,10 @@ function _M:initialize(map)
 end
 
 
-function _M:ckeckMap()
+function _M:checkMap()
   local ok, errmsg = true, 'invalid taskmap schema!'
   local map = self.map
-  if not isValidMap(map) then
+  if not isValidTaskMap(map) then
     ok = false
   else
     for i, v in pairs(map) do
