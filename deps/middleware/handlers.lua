@@ -4,7 +4,7 @@ local handlePopup = require('handle_popup')
 local isPages      = util.isPages
 local tblHasVal    = util.tblHasVal
 local getIconPos   = util.getIconPos
-local mySnapshot   = util.mySnapshot
+-- local mySnapshot   = util.mySnapshot
 
 
 -- popup handler

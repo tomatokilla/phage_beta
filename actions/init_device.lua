@@ -24,5 +24,5 @@ end
 
 return {
   initDevice = {action = initDevice},
-  markStatus = {action = markStatus, pages = {}}
+  markStatus = {action = markStatus}
 }
