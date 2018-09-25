@@ -1,62 +1,30 @@
-
 local routine = {
   initDevice = {
-    'checkingFoo',
-    'checkingBar',
-    '...'
+    'initDevice',
+    'markStatus',
   },
-
   register = {
-    'opennzt',
-    'tapfoo',
-    'tapbar',
+	  'foo',
+    'bar'
   },
-  
-  browse = {
-    'matching',
-    'chat',
-    'randomMatch&Chat'
-  }
 }
 
 local taskMap = {
   {
-    task = 'initDevice',
+    taskname = 'initDevice',
+    times = 1,
   },
   {
-    task = 'register',
-    times = 99,
-  },
+  	taskname = 'register',
+	  times = 3,
+  }
 }
 
--- local labours = {}
-
-local pha = phage:new(routine, taskMap, 'NEX5', 'tantan')
-
-pha:initSettings({
-  foo = 'foo',
-  bar = 'bar',
-})
-
-pha:initState({
-  currentTask = '',
-  currentIndex = 1,
-  flowState = 'ok',
-  flowErr = {
-    routineErr = '',
-    taskMapErr = '',
-    workerErr  = '',
-  },
-  ready = false
-})
-
-pha:set({
-  autoLoadWorker = true,
-  monitor = true,
-})
-
+local Phage = require('phage')
+local pha = Phage:new(routine, taskMap, 'NEX5', 'tantan')
+pha:initState()
+pha:loadWorker('initDevice', {initDevice = function() print('initdevice functon') return {ok=true} end, markStatus = function() print('mark statusfunction') return {ok=true} end,})
+pha:loadWorker('register', {foo = function() print('foo functon') return {ok=true} end, bar = function() print('bar function') return {ok=true} end,})
 pha:prepare()
+pha:reportAndLog()
 pha:run()
-
-
-

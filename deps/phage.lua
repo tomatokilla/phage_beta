@@ -12,8 +12,9 @@ local Object      = require('core').Object
 local Routine     = require('routine')
 local Taskmap     = require('taskmap')
 local StrictTbl   = require('strict_table')
-local Monitor     = require('monitor')
+local json        = require('json')
 local util        = require('util')
+-- local Monitor     = require('monitor')
 
 -- local defaultSettings = require('static.config').defaultSettings
 
@@ -29,7 +30,7 @@ local _M = Object:extend()
 
 function _M:initialize(routine, task, devicetype, app, appversion)
   assert(
-    routine and taskmap and devicetype and app,
+    routine and task and devicetype and app,
     'routine & taskmap & devicetype & app must be provided!'
   )
   self.routine  = Routine:new(routine)
@@ -42,7 +43,7 @@ function _M:initialize(routine, task, devicetype, app, appversion)
   -- data which stored in a strict tbl
   self.settings = StrictTbl:new()
   self.state    = StrictTbl:new()
-  self.monitor  = Monitor:new()
+  -- self.monitor  = Monitor:new()
   self.workers  = {}
 end
 
@@ -51,9 +52,10 @@ function _M:initState(state)
   local task   = self.task.map[1].taskname
   local total  = self.task.map[1].times
   local length = #self.routine.map[task]
-  self.state:set({
+  self:setState({
     hasErr                = false,
     errMsg                = '',
+    isReady               = false,
     isTerminal            = false,
     hasFatalErr           = false,
     fatalErrMsg           = '',
@@ -65,16 +67,16 @@ function _M:initState(state)
     currentTaskCycleIndex = 1,
     currentTaskTotalCycle = total,
   })
-  self.state:set(state)
+  self:setState(state)
 end
 
 -- set state
 function _M:setState(state)
-  self.state:set(state)
+  self.state:set(state or {})
 end
 
 function _M:updateState(state)
-  self.state:mod(state)
+  self.state:mod(state or {})
 end
 
 function _M:getState(k)
@@ -83,12 +85,16 @@ end
 
 -- init settings
 function _M:initSettings(settings)
-  self.settings:set(settings)
+  self:set({
+    autoLoadWorkers = false,
+    logPath = fmt('%s/%s/%s.log', userPath(), 'log', self.info.APP),
+  })
+  self:set(settings)
 end
 
 -- modify settings
 function _M:set(settings)
-  self.settings:set(settings)
+  self.settings:set(settings or {})
 end
 
 -- get settings
@@ -122,12 +128,15 @@ end
 
 function _M:getCurrentProgressProfile()
   return {
-    hasErr       = self:getState('hasErr'),
-    isTerminal   = self:getState('isTermial'),
-    hasFatalErr  = self:getState('hasFatalErr'),
-    currentTask  = self:getState('currentTask'),
-    currentStep  = self:getState('currentStep'),
-    currentIndex = self:getState('currentIndex'),
+    hasErr                = self:getState('hasErr'),
+    errMsg                = self:getState('errMsg'),
+    isReady               = self:getState('isReady'),
+    isTerminal            = self:getState('isTerminal'),
+    hasFatalErr           = self:getState('hasFatalErr'),
+    fatalErrMsg           = self:getState('fatalErrMsg'),
+    currentTask           = self:getState('currentTask'),
+    currentStep           = self:getState('currentStep'),
+    currentIndex          = self:getState('currentIndex'),
     currentTaskId         = self:getState('currentTaskId'),
     currentTaskLength     = self:getState('currentTaskLength'),
     currentTaskCycleIndex = self:getState('currentTaskCycleIndex'),
@@ -175,6 +184,7 @@ function _M:prepare()
       end
     end
   end
+  self:updateState({isReady = true})
 end
 
 
@@ -214,9 +224,9 @@ end
 -- it seems that it is a complicated work to figure out what to do next
 function _M:resolve()
   local taskmap = self.task.map
-  local nextTask,nextCycle, nextIndex, nextStep, isTermial, res
+  local nextTask, nextCycle, nextIndex, nextStep, isTerminal
   local pp = self:getCurrentProgressProfile()
-  if pp.isTermial or pp.hasFatalErr then return end
+  if pp.isTerminal or pp.hasFatalErr then return end
   local isthelaststep  = pp.currentIndex == pp.currentTaskLength
   local isthelastcycle = pp.currentTaskCycleIndex ==
                          pp.currentTaskTotalCycle
@@ -233,9 +243,8 @@ function _M:resolve()
       commonResolve()
     else nextIndex = true end
   else commonResolve() end
-
   return {
-    isTermial = isTermial,
+    isTerminal = isTerminal,
     nextTask = nextTask,
     nextCycle = nextCycle,
     nextIndex = nextIndex,
@@ -249,13 +258,14 @@ function _M:interpretResolve(res)
   local _taskId = pp.currentTaskId
   local _task = pp.currentTask
   local _cycle = pp.currentTaskCycleIndex
-  if res.isTermial then
-    state = {isterminal = true}
+  if res.isTerminal then
+    state = {isTerminal = true}
   elseif res.nextTask then
     local index, taskId, cycle = 1, _taskId + 1, 1
     local task = self.task.map[taskId].taskname
     local step = self.routine.map[task][index]
     local length = #self.routine.map[task]
+    local total = self.task.map[taskId].times
     state = {
       hasErr = false,
       currentTask = task,
@@ -289,7 +299,15 @@ end
 
 function _M:shouldExit()
   local pp = self:getCurrentProgressProfile()
-  return pp.isTermial or pp.hasFatalErr
+  return pp.isTerminal or pp.hasFatalErr or not self.state.isReady
+end
+
+function _M:reportAndLog()
+  local pp = self:getCurrentProgressProfile()
+  local ppJson = json.encode(pp)
+  -- toast(ppJson, 1)
+  print(ppJson)
+  -- writefile(self.settings.logPath, ppJson)
 end
 
 
@@ -297,7 +315,7 @@ function _M:run()
   while true do
     -- update state
     self:updateState(self:interpretResolve(self:resolve()))
-    self.monitor:reportAndlog()
+    self:reportAndLog()
     -- check if is terminal of the process or has fatal err
     if self:shouldExit() then break end
     -- do the current step of task
